@@ -1,6 +1,7 @@
 # sid : generate sortable identifiers
 
 ## Overview
+
 [![GoDoc](https://godoc.org/github.com/chilts/sid?status.svg)](https://godoc.org/github.com/chilts/sid)
 [![Build Status](https://travis-ci.org/chilts/sid.svg?branch=master)](https://travis-ci.org/chilts/sid)
 [![Code Climate](https://codeclimate.com/github/chilts/sid/badges/gpa.svg)](https://codeclimate.com/github/chilts/sid)

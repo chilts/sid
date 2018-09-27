@@ -12,17 +12,23 @@
 package sid
 
 import (
+	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
+
 // Remember the lastTime so that if (by chance) we get the same NanoSecond, we just incrememt the last random number.
+var mu = &sync.Mutex{}
 var lastTime int64
 var lastRand int64
 var chars = make([]string, 11, 11)
-var mu = &sync.Mutex{}
 
 // 64 chars but ordered by ASCII
 const base64 string = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~"
@@ -36,6 +42,34 @@ func toStr(now int64) string {
 	}
 
 	return strings.Join(chars, "")
+}
+
+// IdBase64 returns a 23 char string based on timestamp and a random number. The format is "XXXXXXXXXXX-YYYYYYYYYYY"
+// where X is the timestamp and Y is the random number. If (by any chance) this is called in the same nanosecond, the
+// random number is incremented instead of a new one being generated. This makes sure that two consecutive Ids
+// generated in the same goroutine also ensure those Ids are also sortable.
+//
+// It is safe to call from different goroutines since it has it's own locking.
+func IdBase64() string {
+	// lock for lastTime, lastRand, and chars
+	mu.Lock()
+	defer mu.Unlock()
+
+	now := time.Now().UTC().UnixNano()
+	var r int64
+
+	// if we have the same time, just inc lastRand, else create a new one
+	if now == lastTime {
+		lastRand++
+	} else {
+		lastRand = rand.Int63()
+	}
+	r = lastRand
+
+	// remember this for next time
+	lastTime = now
+
+	return toStr(now) + "-" + toStr(r)
 }
 
 // Id returns a 23 char string based on timestamp and a random number. The format is "XXXXXXXXXXX-YYYYYYYYYYY" where X
@@ -63,5 +97,14 @@ func Id() string {
 	// remember this for next time
 	lastTime = now
 
-	return toStr(now) + "-" + toStr(r)
+	nowStr := strconv.FormatInt(now, 10)
+	rStr := strconv.FormatInt(r, 10)
+
+	for len(rStr) < 19 {
+		rStr = "0" + rStr
+	}
+
+	blah := nowStr + "-" + rStr
+	fmt.Printf("(%s, %s, %s)", nowStr, rStr, blah)
+	return nowStr + "-" + rStr
 }
