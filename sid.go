@@ -12,7 +12,6 @@
 package sid
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -104,7 +103,5 @@ func Id() string {
 		rStr = "0" + rStr
 	}
 
-	blah := nowStr + "-" + rStr
-	fmt.Printf("(%s, %s, %s)", nowStr, rStr, blah)
 	return nowStr + "-" + rStr
 }
