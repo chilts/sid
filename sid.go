@@ -12,6 +12,7 @@
 package sid
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -32,15 +33,37 @@ var chars = make([]string, 11, 11)
 // 64 chars but ordered by ASCII
 const base64 string = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~"
 
-func toStr(now int64) string {
+func toStr(n int64) string {
 	// now do the generation (backwards, so we just %64 then /64 along the way)
 	for i := 10; i >= 0; i-- {
-		index := now % 64
+		index := n % 64
 		chars[i] = string(base64[index])
-		now = now / 64
+		n = n / 64
 	}
 
 	return strings.Join(chars, "")
+}
+
+func toBase32(n int64) string {
+	b32 := strconv.FormatInt(n, 32)
+
+	for len(b32) < 13 {
+		b32 = "0" + b32
+	}
+
+	// log.Printf("b32=%s\n", b32)
+
+	return b32
+}
+
+func toHex(n int64) string {
+	hex := fmt.Sprintf("%x", n)
+
+	for len(hex) < 16 {
+		hex = "0" + hex
+	}
+
+	return hex
 }
 
 // IdBase64 returns a 23 char string based on timestamp and a random number. The format is "XXXXXXXXXXX-YYYYYYYYYYY"
@@ -71,10 +94,66 @@ func IdBase64() string {
 	return toStr(now) + "-" + toStr(r)
 }
 
-// Id returns a 23 char string based on timestamp and a random number. The format is "XXXXXXXXXXX-YYYYYYYYYYY" where X
-// is the timestamp and Y is the random number. If (by any chance) this is called in the same nanosecond, the random
-// number is incremented instead of a new one being generated. This makes sure that two consecutive Ids generated in
-// the same goroutine also ensure those Ids are also sortable.
+// IdBase32 returns a 27 char string based on timestamp and a random number. The format is
+// "XXXXXXXXXXXXX-YYYYYYYYYYYYY" where X is the timestamp and Y is the random number. If (by any chance) this is called
+// in the same nanosecond, the random number is incremented instead of a new one being generated. This makes sure that
+// two consecutive Ids generated in the same goroutine also ensure those Ids are also sortable.
+//
+// It is safe to call from different goroutines since it has it's own locking.
+func IdBase32() string {
+	// lock for lastTime, lastRand, and chars
+	mu.Lock()
+	defer mu.Unlock()
+
+	now := time.Now().UTC().UnixNano()
+	var r int64
+
+	// if we have the same time, just inc lastRand, else create a new one
+	if now == lastTime {
+		lastRand++
+	} else {
+		lastRand = rand.Int63()
+	}
+	r = lastRand
+
+	// remember this for next time
+	lastTime = now
+
+	return toBase32(now) + "-" + toBase32(r)
+}
+
+// IdHex returns a char string based on timestamp and a random number. The format is
+// "XXXXXXXXXXXXXXXX-YYYYYYYYYYYYYYYY" where X is the timestamp and Y is the random number. If (by any chance) this is
+// called in the same nanosecond, the random number is incremented instead of a new one being generated. This makes
+// sure that two consecutive Ids generated in the same goroutine also ensure those Ids are also sortable.
+//
+// It is safe to call from different goroutines since it has it's own locking.
+func IdHex() string {
+	// lock for lastTime, lastRand, and chars
+	mu.Lock()
+	defer mu.Unlock()
+
+	now := time.Now().UTC().UnixNano()
+	var r int64
+
+	// if we have the same time, just inc lastRand, else create a new one
+	if now == lastTime {
+		lastRand++
+	} else {
+		lastRand = rand.Int63()
+	}
+	r = lastRand
+
+	// remember this for next time
+	lastTime = now
+
+	return toHex(now) + "-" + toHex(r)
+}
+
+// Id returns a 39 char string based on timestamp and a random number. The format is
+// "XXXXXXXXXXXXXXXXXXX-YYYYYYYYYYYYYYYYYYY" where X is the timestamp and Y is the random number. If (by any chance)
+// this is called in the same nanosecond, the random number is incremented instead of a new one being generated. This
+// makes sure that two consecutive Ids generated in the same goroutine also ensure those Ids are also sortable.
 //
 // It is safe to call from different goroutines since it has it's own locking.
 func Id() string {

@@ -20,13 +20,19 @@ go get github.com/chilts/sid
 
 ```
 id1 := sid.Id()
-id2 := sid.Id()
+id2 := sid.IdHex()
+id3 := sid.IdBase32()
+id4 := sid.IdBase64()
 
 fmt.Printf("id1 = %s\n", id1)
 fmt.Printf("id2 = %s\n", id2)
+fmt.Printf("id3 = %s\n", id3)
+fmt.Printf("id4 = %s\n", id4)
 
-// -> "id1 = 1IeSBAWW83j-2wgJ4PUtlAr"
-// -> "id2 = 1IeSBAWW9kK-0cDG64GQgGJ"
+// -> "id1 = 1559872035903071353-1186579057231285506"
+// -> "id2 = 15a5cf57e7d2a837-6eaafe687e7b3ec3"
+// -> "id3 = 1b9efqnl51jj7-4u66ikpfq9ugm"
+// -> "id4 = 1IeSBAWW9kK-0cDG64GQgGJ"
 ```
 
 ## Author
@@ -37,6 +43,6 @@ For [AppsAttic](https://appsattic.com/), [@AppsAttic](https://twitter.com/AppsAt
 
 ## License
 
-[MIT](https://publish.li/mit-qLQqmVTO).
+[MIT](https://chilts.mit-license.org/2017/)
 
 (Ends)
